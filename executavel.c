@@ -22,11 +22,53 @@ void inicializa_lista( Playlist *p, int t ){
 }
 
 
-void carrega_musicas_arq(Playlist *p){
+void carrega_musicas_arq(Playlist *p, int  (*compara_nome_musica)(void*, void*)){
+	
+	FILE *f = NULL;
 	
 	if(valida_arquivo() == 1){
-		printf("\nDeseja carregar as musicas do seu arquivo txt:\n");
+		char decisao;
+		printf("\nDeseja carregar as musicas do seu arquivo txt:(s/n)\n");
+		scanf(" %c", &decisao);
+		if(decisao == 's'){
+			f =  fopen("playlist.txt", "rt");
+			int n =0, i=0;	
+			
+			fscanf(f,"%d",&n);
+
+			
+			for( i = 0 ; i < n ; i++ ){
+				Musica *novaMusica = malloc(sizeof(Musica));
+				Artista *novoArtista = malloc(sizeof(Artista));
+				Data *novaData = malloc(sizeof(Data));
+
+				fscanf(f," %[^\n]", novaMusica->nome);
+				fscanf(f,"%d", &novaMusica->duracao);
+				fscanf(f," %[^\n]", novaMusica->estilo);				
+				fscanf(f," %[^\n]", novoArtista->nome);  
+				fscanf(f," %[^\n]", novoArtista->nacionalidade);
+				fscanf(f, "%d", &novaData->dia);
+				fscanf(f, "%d", &novaData->mes);
+				fscanf(f, "%d", &novaData->ano);
+				novaMusica->artista = novoArtista;
+				novaMusica->data = novaData;
+				
+				if(i == 0){
+					int dd = inserir_inicio(p,novaMusica);
+				}
+				else{
+					int o = insere_ordem(p, novaMusica, compara_nome_musica);
+				}
+				
+			}
+		}
+		else{
+			//mensagem
+			f = fopen("playlist.txt","wt");
+		}
 	}
+	
+	fclose( f );
 }
 
 void mostra_menu() {
@@ -36,8 +78,8 @@ void mostra_menu() {
   printf("[3] | Buscar musica pelo nome\n");
   printf("[4] | Buscar musica pelo artista\n");
   printf("[5] | Buscar musica pelo estilo\n");
-  printf("[6] | Remover msica\n");
-  printf("[0] | Sair do programa\n");
+  printf("[6] | Remover musica\n");
+  printf("[0] | Sair do programa e salvar as musicas\n");
 
   printf("\nDIGITE SUA ESCOLHA: \n");
 
@@ -108,7 +150,7 @@ int cadastrar_musica(Playlist *p, int  (*compara)(void*, void*)){
 		insere_ordem(p, novaMusica, compara_nome_musica);
 	}
 	else{
-		printf("Essa musica j� foi cadastrada ...\n");
+		printf("\n\tEssa musica ja foi cadastrada ...\n\n");
 		cadastrar_musica(p,compara_nome_musica);
 	}  
   
@@ -155,25 +197,44 @@ void mostra_playlist(Playlist p, void (*mostra)(void *) ){
 		//printf("Dados da lista (%d elementos):\n", p.qtd );
 		Musica *m = p.lista;
 		int cont = 0; // cont ? o ?ndice do elemento dentro da lista.
-		while( m != NULL ){
-			printf("\n[%d] \n", cont);
-			mostra(m); // Invoca??o por callback
-			m = m->proximo;
-			cont++;
+		
+		if(p.qtdMusicas > 0){
+			while( m != NULL ){
+				printf("\n[%d] \n", cont+1);
+				mostra(m); // Invoca??o por callback
+				m = m->proximo;
+				cont++;
+			}
 		}
+		else{
+			printf("\nNao existem musica cadastradas.\n");
+		}
+		
+		
+	
+	
 		
 	printf("\n--------------------------------\n");
 }
 
 void busca_musica( Playlist p,void (*mostra)(void *), int *filtro_busca){
 	Musica *m = p.lista; 
-	char nome[15] = "nome";
-	char artista[15] = "artista"; 
+	char *tipo_busca;
 	char musica_buscada[30];
 	int encontrado=0;
-	
-		printf("\nDigite o nome da musica buscada: \n");
-		scanf(" %[^\n]", musica_buscada);
+				
+		if((*filtro_busca) == 3){			
+			printf("\nDigite o nome da musica :\n");
+			scanf(" %[^\n]", musica_buscada);
+		}
+		else if((*filtro_busca) == 4){				
+			printf("\nDigite o nome do artista: \n");
+			scanf(" %[^\n]", musica_buscada);
+		}
+		else{			
+			printf("\nDigite o nome do estilo: \n");
+			scanf(" %[^\n]", musica_buscada);
+		}	
 				
 		while( m != NULL ){
 			int cmp;
@@ -186,6 +247,7 @@ void busca_musica( Playlist p,void (*mostra)(void *), int *filtro_busca){
 			else{
 				cmp=strcmp(m->estilo, musica_buscada);
 			}
+			
 			if(cmp==0){
 				mostra(m);
 				encontrado = 1;		
@@ -193,7 +255,7 @@ void busca_musica( Playlist p,void (*mostra)(void *), int *filtro_busca){
 			m = m->proximo;
 		}
 		if(encontrado==0)
-		 printf("Musica nao encontrada!!\n");
+			printf("\nNenhum resultado encotrado!!\n");
 }
 int insere_pos( Playlist *p, void *info , int pos ){
 	
@@ -222,7 +284,6 @@ int insere_pos( Playlist *p, void *info , int pos ){
 int insere_ordem( Playlist *p, void *info , int (*compara_nome_musica)(void*, void*)){
 	Musica *aux = p->lista;
 	int cont = 0;
-
 	while( aux != NULL && compara_nome_musica( info, aux->nome) > 0){
 		aux = aux->proximo;
 		cont++;
@@ -238,6 +299,8 @@ void remover_musica(Playlist *p, void (*mostra)(void *)){
 	Musica *anterior;
 	printf("Digite o indice da musica que deseja excluir: ");
 	scanf("%d", &indice);
+	
+	--indice;
 	
 	if(indice < 0){
 		printf("Esse indice nao existe!\n");
@@ -259,20 +322,22 @@ void remover_musica(Playlist *p, void (*mostra)(void *)){
 }else if(indice==0){
 	char resposta;
 	mostra(mus);
-	printf("Deseja excluir mesmo excluir a musica? (s/n)\n");
+	printf("Deseja mesmo excluir a musica? (s/n)\n");
 	scanf(" %c",&resposta);
 	if(resposta=='n') return;
-	p->lista = p->lista->proximo;
-	
+	p->lista = m->proximo;
+	p->qtdMusicas--;	
 }else{
 		char resposta;
 	mostra(mus);
-	printf("Deseja excluir mesmo excluir a musica? (s/n)\n");
+	printf("Deseja mesmo excluir a musica? (s/n)\n");
 	scanf(" %c",&resposta);
 	if(resposta=='n') return;
 		anterior->proximo = mus->proximo;
+		p->qtdMusicas--;
 		free(mus);
 	}
+	
 	
 	
 }
@@ -283,6 +348,7 @@ void salva_arquivo(Playlist p){
 		printf("Erro ao abrir arquivo");
 		return; 
 	}
+	fprintf(f,"%d\n",p.qtdMusicas);
 	while( m != NULL ){
 		fprintf(f,"%s\n", m->nome );
 		fprintf(f,"%d\n", m->duracao );
@@ -292,7 +358,6 @@ void salva_arquivo(Playlist p){
 		fprintf(f,"%d\n", m->data->dia );
 		fprintf(f,"%d\n", m->data->mes );
 		fprintf(f,"%d\n", m->data->ano );
-		fprintf(f,"%s\n", "--" );
 		printf("As musicas foram salvas!!\n");
 m = m->proximo;	
 }

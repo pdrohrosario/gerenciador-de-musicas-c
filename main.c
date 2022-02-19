@@ -40,7 +40,7 @@ int main() {
   
   inicializa_playlist(&p, sizeof(Playlist *));
   
-  carrega_musicas_arq(&p);
+  carrega_musicas_arq(&p,compara_nome_musica);
   
   int escolha_usuario = 1000;
     while (escolha_usuario != 0) {
@@ -74,6 +74,7 @@ int main() {
 				break;
 			case 0:
 				 salva_arquivo(p);
+				 break;
 				
 		    default:
 			  	printf("Opcao invalida"); 

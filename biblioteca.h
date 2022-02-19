@@ -34,7 +34,7 @@ typedef struct {
 } Playlist;
 
 
-void carrega_musicas_arq(Playlist *p);
+void carrega_musicas_arq(Playlist *p,int  (*compara_nome_musica)(void*, void*));
 int valida_arquivo();
 int cadastrar_musica( Playlist *p, int  (*compara_nome_musica)(void*, void*));
 void exibe_menu();
